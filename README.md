@@ -1,14 +1,18 @@
 # flask-micro-blog
-A flask blog with TinyMongo back end
+A flask blog with TinyMongo back end.  A naive blog using Flask and TinyMongo and some other tasty bits.
 
 # Intent
 
-Intent: Create a micro-blogging system that utilizes the following concepts
+Intent: Create a micro-blogging system that utilizes the following concepts/tools
 
 __Flask__ – Armin Ronacher’s Flask Framework, it’s simply the best if you want to build it yourself
 and have a great amount of control over what’s going on.
 
 __Jinja2__ – Armin Ronacher’s templating engine (default to Flask)
+
+Armin Ronacher - there's always something new coming out of his site that is worthwhile
+
+https://github.com/mitsuhiko
 
 __Bootstrap 4__ – The premier CSS and javascript framework for producing consistent and fast web-UI. 
 I would also like to include Bulma at some point too, because it is simpler and pure CSS.
