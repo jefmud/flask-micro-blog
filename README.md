@@ -27,6 +27,8 @@ this table..."
 I am going to use __TinyMongo__ as it is close enough to PyMongo implementation in case someone wants to take
 the blog/CMS to the next level.  Also… I can implement Flask-admin as a quick/raw administrative interface.
 
+I wrote something akin to this, but his is better.
+
 https://github.com/schapman1974/tinymongo
 
 __Flask-WTF__ – the slightly "Baroque" but overall excellent form package.
