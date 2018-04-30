@@ -172,8 +172,24 @@ def page_edit(id=None):
         # get the data from the page-object into the form
         form = object2form(page, form)
     
-    return render_template(page_template, form=form)
+    return render_template(page_template, form=form, id=id, title="Edit page")
 
+@app.route('/page/delete/<id>')
+def page_delete(id):
+    if not g.is_admin:
+        abort(403)
+    pquery = {'_id':id}
+    page = g.db.pages.find_one(pquery)
+    if page is None:
+        abort(404)
+        
+    g.db.pages.delete_many(pquery)
+    
+    # make sure we can safely redirect to referrer-- if not, go to top-level of site
+    if request.referrer == None or url_for('page_edit', id=id) in request.referrer:
+        return redirect(url_for('site'))
+    else:
+        return redirect(request.referrer)
     
 @app.route('/logout')
 def logout():
@@ -206,6 +222,7 @@ def site(path=None):
       
     return render_template('page.html', page=page)   
 
+  
 
 if __name__ == '__main__':
     initialize()

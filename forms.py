@@ -84,7 +84,7 @@ class PageInfoForm(BaseForm):
                        description='if you omit this field, the slug is auto-generated from the title',
                        validators=[autoslug])
     is_published = BooleanField('is published')
-    is_markdown = BooleanField('use markdown format')    
+    is_markdown = BooleanField('use markdown format')
     
 class PageForm(PageInfoForm):
     content = TextAreaField('Content', validators=[DataRequired()])
