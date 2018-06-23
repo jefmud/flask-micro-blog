@@ -1,0 +1,15 @@
+{% extends 'admin/master.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+{% block head %}
+{{ ckeditor.load() }}
+{% endblock %}
+{% block body %}
+<h1>Site Meta</h1>
+<p>All the site "Meta" parameters: Brand, Theme, Navbar background color (bootstrap-CDN-theme-based),
+description, and logo (URL or resource).
+</p>
+<p>
+Further information on the Bootswatch Themes can be found here: <a href="" target="_blank">BOOTSWATCH WEBSITE</a>
+</p>
+{{ wtf.quick_form(form) }}
+{% endblock %}

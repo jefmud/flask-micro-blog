@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+{% block title %}File Upload{% endblock %}
+{% block styles %}
+  {{ dropzone.load_css() }}
+{% endblock %}
+{% block content %}
+
+<div id="drop-area" class="container">
+
+  <h1>Upload Files</h1>
+  
+  <p>
+  Drag and drop files into the container below.  The process will upload and show success or failure condition.
+  </p>
+ 
+  <div id="gallery" /></div>
+    {{ dropzone.create(action='/upload') }}
+  </div>
+  
+  {{ dropzone.load_js() }}
+{% endblock %}

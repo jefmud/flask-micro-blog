@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+{% block title %}Search Results{% endblock %}
+{% block content %}
+
+<div class="container">
+  <h1>Search Results for {{search_term}}</h1>
+  {% if pages %}
+    {% for page in pages %}
+      <p>
+      <a href="{{page.slug}}">{{page.title}}</a>
+      </p>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% endblock %}

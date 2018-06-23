@@ -1,4 +1,6 @@
 import re
+from functools import wraps
+from flask import session, redirect, request, url_for
 
 def slugify(s):
     """
@@ -66,3 +68,19 @@ def object2form(obj, form):
     for field in form:
         field.data = obj.get(field.name)
     return form
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not(session.get('is_authenticated')):
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not(session.get('is_admin')):
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function

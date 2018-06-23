@@ -1,4 +1,4 @@
-{% extends 'layout.html' %}
+{% extends 'themes/my-minty/layout.html' %}
 {% block title %}{{page.title}}{% endblock %}
 {% block content %}
 
@@ -10,9 +10,6 @@
   <div class="content" data-toggle="tooltip" data-placement="left" title="" data-original-title="Tooltip on left">
     {{page.content|safe}}
   </div>
-  {% if session.is_authenticated %}
-    <span class="badge badge-light"><a href="{{url_for('page_edit', id=page._id) }}">Edit this page</a></span>
-  {% endif %}
 </div>
 {% endblock %}
 {% block scripts %}

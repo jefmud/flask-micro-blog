@@ -1,0 +1,12 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h1>Admininstration</h1>
+<p>Ok, this is where your admin page goes... Flask-admin is a little bit clunky and perhaps not
+as customizable as I need.  But the menus and controls are crisp... so why not use it for now.
+</p>
+<h3>Links</h3>
+<ul>
+<li><a href="{{ url_for('site') }}">Blog Homepage</a></li>
+</ul>
+{% endblock %}

@@ -1,12 +1,35 @@
 from flask import g
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, HiddenField
+from wtforms import (StringField, PasswordField, SubmitField,
+                     BooleanField, TextAreaField, HiddenField, SelectField)
 from flask_ckeditor import CKEditorField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 from werkzeug.security import generate_password_hash
 from utils import slugify
+import os
+
+# if programmer wants to limit choices, you could cut this list back
+# uses the CDN from bootswatch.com
+bootswatch_themes = ['cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal',
+                     'litera', 'lumen', 'lux', 'materia', 'minty', 'pulse', 'sandstone', 'simplex',
+                     'sketchy', 'slate', 'solar', 'spacelab', 'superhero', 'united', 'yeti']
+
+# create the bootswatch theme choice list
+theme_choices = []
+for theme in bootswatch_themes:
+    theme_choices.append((theme,theme))
+
+# get extended themes (directory name of non-bootswatch/default)
+# a tad awkward, perhaps should be stored in the database at startup?
+theme_extended_choices = theme_choices[:]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+for theme in os.listdir(os.path.join(BASE_DIR, 'templates/themes')):
+    # stored as tuples for the WTForm SelectField
+    theme_extended_choices.append((theme,theme))
+
 
 class BaseForm(FlaskForm):
+    """All forms inherit from BaseForm"""
     # this base form allows form inheritance order to affect screen order
     # it works, but I think it is "programming by side-effect" sleight of hand
     def __iter__(self):
@@ -35,6 +58,7 @@ def username_exists(form, field):
     
 def autohash(form, field):
     """hash password if necessary"""
+    # check hashing type, rehash if not hashed
     if not ('pbkdf2:sha256' in field.data):
         field.data = generate_password_hash(field.data)
         
@@ -42,6 +66,12 @@ def autoslug(form, field):
     """if slug is empty, autoslug it"""
     if field.data == "":
         field.data = slugify(form.title.data)
+        
+class FileForm(BaseForm):
+    title = StringField('Filename/Title')
+    filepath = StringField('File Path')
+    owner = StringField()
+    submit = SubmitField('Save')
     
 class UserExtrasForm(BaseForm):
     display_name = StringField('Display Name')
@@ -78,20 +108,39 @@ class AdminUserForm(AdminUsernamePasswordForm, UserExtrasForm):
     is_active = BooleanField('is active')
 
 class PageInfoForm(BaseForm):
+    """Base Page Information Form, content is added via PageForm (below)"""
     owner = StringField('Owner')
     title = StringField('Title', validators=[DataRequired()])
     slug = StringField('Custom Slug (optional)',
                        description='if you omit this field, the slug is auto-generated from the title',
                        validators=[autoslug])
     is_published = BooleanField('is published')
-    is_markdown = BooleanField('use markdown format')
+    theme = SelectField('Theme selector', choices=theme_extended_choices)
+    # maybe add markdown later--
+    # markdown would be a good choice for unprivileged editors
+    # but... we can put a safety filter on HTML as it goes into the database, it could strip script tags
+    # is_markdown = BooleanField('use markdown format')
     
 class PageForm(PageInfoForm):
+    """Inherits PageInfoForm, non-HTML"""
     content = TextAreaField('Content', validators=[DataRequired()])
     submit = SubmitField('Save Page')
     
 class HTMLPageForm(PageForm):
+    """CKEditor content overrides content with the CKEditor HTML"""
     content = CKEditorField('Content', validators=[DataRequired()])
     
 class AdminPageForm(PageForm):
+    """Administor pages, hide the submit button in Flask-Admin interface"""
     submit = HiddenField() # hide the button
+    
+class AdminSiteMeta(BaseForm):
+    """Site Meta form"""
+    brand = StringField('Site Brand', validators=[DataRequired()])
+    theme = SelectField('Bootswatch Theme CDN', choices=theme_choices)
+    navbackground = BooleanField('Navbar Background dark theme')
+    # logo, description not implemented yet
+    description = CKEditorField('Description')
+    # logo will be an image URL or Local File (use custom validator?)
+    logo = StringField()
+    submit = SubmitField('Save Meta')
