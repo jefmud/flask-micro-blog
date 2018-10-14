@@ -1,6 +1,8 @@
 import re
 from functools import wraps
 from flask import session, redirect, request, url_for
+from html.parser import HTMLParser
+import random, string
 
 def slugify(s):
     """
@@ -84,3 +86,32 @@ def admin_required(f):
             return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.strict = False
+        self.convert_charrefs= True
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+def password_generator(size=8, chars=string.ascii_letters + string.digits):
+    """
+    Returns a string of random characters, useful in generating temporary
+    passwords for automated password resets.
+    
+    size: default=8; override to provide smaller/larger passwords
+    chars: default=A-Za-z0-9; override to provide more/less diversity
+    
+    Credit: Ignacio Vasquez-Abrams
+    Source: http://stackoverflow.com/a/2257449
+    """
+    return ''.join(random.choice(chars) for i in range(size))
