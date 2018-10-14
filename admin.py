@@ -20,6 +20,9 @@ class MyAdminView(AdminIndexView):
         abort(403)
     
 class UserView(ModelView):
+    def is_accessible(self):
+        return g.is_admin
+    
     # This view is used by admin, see initialize
     column_list = ('username', 'email', 'is_admin', 'is_active', 'display_name', 'avatar', 'bio', 'password' )
     column_sortable_list = ('username', 'email')
@@ -30,6 +33,9 @@ class UserView(ModelView):
     can_set_page_size = True
     
 class PageView(ModelView):
+    def is_accessible(self):
+        return g.is_admin
+    
     column_list = ('owner', 'slug', 'title', 'is_published')
     column_sortable_list = ('owner', 'slug', 'title','is_published')
     
@@ -38,6 +44,9 @@ class PageView(ModelView):
     can_set_page_size = True
     
 class DeletedView(ModelView):
+    def is_accessible(self):
+        return g.is_admin
+    
     column_list = ('owner', 'slug', 'title')
     column_sortable_list = ('owner','slug','title')
     
@@ -46,6 +55,9 @@ class DeletedView(ModelView):
     can_set_page_size = True
     
 class FileView(ModelView):
+    def is_accessible(self):
+        return g.is_admin
+    
     column_list = ('owner','title','filepath')
     column_sortable_list = ('owner','title','filepath')
     
@@ -54,6 +66,9 @@ class FileView(ModelView):
     can_set_page_size = True
     
 class SiteMetaView(BaseView):
+    def is_accessible(self):
+        return g.is_admin
+    
     @expose('/', methods=['POST','GET'])
     def index(self):
         # get the FIRST meta object

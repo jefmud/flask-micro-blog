@@ -9,7 +9,8 @@ import datetime
 
 from tinymongo import TinyMongoClient, Query, where
 
-from utils import slugify, form2object, object2form, login_required, admin_required
+from utils import (slugify, form2object, object2form, login_required,
+                   admin_required, strip_tags, password_generator)
 from markdown2 import markdown
 
 from forms import LoginForm, HTMLPageForm, PageForm, RegisterForm, FileForm, bootswatch_themes
@@ -18,22 +19,15 @@ import admin
 
 
 app = Flask(__name__)
-app.secret_key = 'youCanDoBetterThanThis'
+app.config.from_pyfile('app.cfg')
 DB = TinyMongoClient().blog
-first_time_admin_user = 'admin'
-first_time_admin_password = 'adminme'
-theme_dir= './themes'
-shortcode_tag = '[['
-shortcode_endtag = ']]'
+
 Bootstrap(app)
 ckeditor = CKEditor(app)
 admin.initialize(app, DB)
 dropzone = Dropzone()
 dropzone.init_app(app)
 
-HOST = '0.0.0.0'
-PORT = 5000
-DEBUG = False
 
 ### FILE UPLOADS PARAMETERS
 # UPLOAD FOLDER will have to change based on your own needs/deployment scenario
@@ -55,17 +49,28 @@ def create_user(username, password, email='', is_admin=False, is_active=True, bi
                              'email':email, 'is_active':is_active, 'bio':bio, 'avatar':avatar})
     return u
 
+def createsuperuser():
+    """interactive CLI create user"""
+    username = input("Enter the username: ")
+    password = input("Enter the password: ")
+    if create_user(username=username, password=password, is_admin=True, is_active=True) is None:
+        print("Username already exists, choose a new one.")
+    else:
+        print("User successfully created.")
 
 def initialize():
     """initialize the app"""
     # this is called before the app starts
     # we're using a separte function because it has hashing and checking
-    u  = create_user(username=first_time_admin_user,
-                     password=first_time_admin_password,
+    admin='admin'
+    password = password_generator()
+    u  = create_user(username=admin,
+                     password=password,
                      is_admin=True)
     if u:
-        print('Admin user created. username={} password={}'.format(first_time_admin_user,
-                                                                   first_time_admin_password))
+        # replace with a randomization
+        print('WRITE THIS DOWN!')
+        print('Admin user created. username={} password={}'.format(admin, password))
         
     # These are the default HOME and ABOUT pages-- can be easily changed later.
     # will not overwrite existing home and about pages.
@@ -322,6 +327,8 @@ def search():
 
 def find_shortcodes(content):
     """find and return shortcodes in the content"""
+    shortcode_tag = app.config['SHORTCODE_TAG']
+    shortcode_endtag = app.config['SHORTCODE_ENDTAG']
     shortcodes = []
     start_mark = 0
     while True:
@@ -335,8 +342,31 @@ def find_shortcodes(content):
 
 def page_mod_shortcodes(page, shortcodes):
     """takes in a page and alters using shortcodes, returns new page"""
+    # theory, as shortcodes are processed, these turn into additional key value pairs on the page object
+    # [[template sidebar-left.html]] would add page['template'] = 'sidebar-left.html'
+    # if the first content keyword is "page" it fetches the page content referenced
     
-    # modify template based on theme
+    shortcode_tag = app.config['SHORTCODE_TAG']
+    shortcode_endtag = app.config['SHORTCODE_ENDTAG']
+    
+    for shortcode in shortcodes:
+        # remove tag markers and split on whitespace
+        scs = shortcode
+        scs = scs.replace(shortcode_tag,'')
+        scs = scs.replace(shortcode_endtag,'')
+        sclist = scs.split()
+        if len(sclist) > 1:
+            if sclist[0].lower() == "page":
+                key = strip_tags(sclist[1].lower())
+                slug = strip_tags(sclist[2].strip())
+                cpage = g.db.pages.find_one({'slug':slug})
+                page[key] = cpage['content']
+            else:
+                key = strip_tags(sclist[0]).strip() # have to strip_tags because of multiline shortcode
+                value = scs[scs.find(key)+len(key):].strip() # exclude just the tag from the content
+                page[key] = value
+    
+    # ensure that a default page-template is set (if it was not set in the shortcodes)
     page['template'] = page.get('template','page.html')
     page['theme'] = page.get('theme','default')
     
@@ -346,7 +376,7 @@ def page_mod_shortcodes(page, shortcodes):
         g.theme = page['theme']
         page['theme'] == 'default'
         
-    theme_path = os.path.join(BASE_DIR, 'templates', theme_dir, page['theme'])
+    theme_path = os.path.join(BASE_DIR, 'templates', app.config['THEME_DIR'], page['theme'])
     
     if not os.path.exists(theme_path) or page['theme']=='':
         # in case user selected a non-existent theme
@@ -355,7 +385,7 @@ def page_mod_shortcodes(page, shortcodes):
     # note add some error trapping here,
     # if somehow there is a non-existent template, we should flash error and put them on default
     # page template.
-    page['template'] = "{}/{}/{}".format(theme_dir, page['theme'], page['template'])
+    page['template'] = "{}/{}/{}".format(app.config['THEME_DIR'], page['theme'], page['template'])
     
     # remove shortcodes from display content
     for shortcode in shortcodes:
@@ -388,7 +418,11 @@ def site(path=None):
     
     # modify page object with shortcode content directives, return new object
     page = page_mod_shortcodes(page, shortcodes)
-    return render_template(page['template'], page=page)   
+    try:
+        return render_template(page['template'], page=page)
+    except:
+        flash("Template <{}> not found".format(page['template']), category="danger")
+        return render_template('themes/default/page.html', page=page)
 
 
 
@@ -399,5 +433,9 @@ if __name__ == '__main__':
     if '--initialize' in sys.argv:
         initialize()
         sys.exit(0)
+        
+    if '--createsuperuser' in sys.argv:
+        createsuperuser()
+        sys.exit(0)
     
-    app.run(host=HOST, port=PORT, debug=DEBUG)
+    app.run(host=app.config['HOST'], port=app.config['PORT'], debug=app.config['DEBUG'])
